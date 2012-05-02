@@ -109,17 +109,25 @@ static void register_PrimView_API(lua_State *L){
     lua_setglobal(L, "PVF");
 }
 
+#define EXPAND_ALLOC(ARRAY, TYPE, COUNT, ALLOC_COUNT) do{ \
+	if(COUNT >= ALLOC_COUNT){ \
+		if(0 == ALLOC_COUNT){ \
+			ALLOC_COUNT = 512; \
+		}else{ \
+			ALLOC_COUNT *= 2; \
+		} \
+		ARRAY = (TYPE*)realloc(ARRAY, sizeof(TYPE) * (ALLOC_COUNT)); \
+		if(NULL == ARRAY){ \
+			luaL_error(L, "Error allocating %d %s's\n", ALLOC_COUNT, #TYPE); \
+			return 0; \
+		} \
+	} \
+}while(0)
+
 static int cb_PrimView_Point(lua_State *L){
 	int i;
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_points >= _G->n_points_alloc){
-		_G->n_points_alloc = 2*_G->n_points_alloc+8;
-		_G->point = (PrimView_Point*)realloc(_G->point, sizeof(PrimView_Point) * _G->n_points_alloc);
-		if(NULL == _G->point){
-			luaL_error(L, "Error allocating %d points\n", _G->n_points_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->point, PrimView_Point, _G->n_points, _G->n_points_alloc);
 	for(i = 0; i < 3; ++i){
 		lua_pushinteger(L, 1+i);
 		lua_gettable(L, 1);
@@ -133,14 +141,7 @@ static int cb_PrimView_Point(lua_State *L){
 static int cb_PrimView_Line(lua_State *L){
 	int i;
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_lines >= _G->n_lines_alloc){
-		_G->n_lines_alloc = 2*_G->n_lines_alloc+8;
-		_G->line = (PrimView_Line*)realloc(_G->line, sizeof(PrimView_Line) * _G->n_lines_alloc);
-		if(NULL == _G->line){
-			luaL_error(L, "Error allocating %d lines\n", _G->n_lines_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->line, PrimView_Line, _G->n_lines, _G->n_lines_alloc);
 	for(i = 0; i < 2; ++i){
 		lua_pushinteger(L, 1+i);
 		lua_gettable(L, 1);
@@ -156,14 +157,7 @@ static int cb_PrimView_Line(lua_State *L){
 static int cb_PrimView_Arrow(lua_State *L){
 	int i;
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_arrows >= _G->n_arrows_alloc){
-		_G->n_arrows_alloc = 2*_G->n_arrows_alloc+8;
-		_G->arrow = (PrimView_Arrow*)realloc(_G->line, sizeof(PrimView_Arrow) * _G->n_arrows_alloc);
-		if(NULL == _G->arrow){
-			luaL_error(L, "Error allocating %d arrows\n", _G->n_arrows_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->arrow, PrimView_Arrow, _G->n_arrows, _G->n_arrows_alloc);
 	for(i = 0; i < 2; ++i){
 		lua_pushinteger(L, 1+i);
 		lua_gettable(L, 1);
@@ -179,14 +173,7 @@ static int cb_PrimView_Arrow(lua_State *L){
 static int cb_PrimView_Triangle(lua_State *L){
 	int i;
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_tris >= _G->n_tris_alloc){
-		_G->n_tris_alloc = 2*_G->n_tris_alloc+8;
-		_G->tri = (PrimView_Triangle*)realloc(_G->tri, sizeof(PrimView_Triangle) * _G->n_tris_alloc);
-		if(NULL == _G->tri){
-			luaL_error(L, "Error allocating %d tris\n", _G->n_tris_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->tri, PrimView_Triangle, _G->n_tris, _G->n_tris_alloc);
 	for(i = 0; i < 3; ++i){
 		lua_pushinteger(L, 1+i);
 		lua_gettable(L, 1);
@@ -202,14 +189,7 @@ static int cb_PrimView_Triangle(lua_State *L){
 static int cb_PrimView_Quad(lua_State *L){
 	int i;
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_quads >= _G->n_quads_alloc){
-		_G->n_quads_alloc = 2*_G->n_quads_alloc+8;
-		_G->quad = (PrimView_Quad*)realloc(_G->quad, sizeof(PrimView_Quad) * _G->n_quads_alloc);
-		if(NULL == _G->quad){
-			luaL_error(L, "Error allocating %d quads\n", _G->n_quads_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->quad, PrimView_Quad, _G->n_quads, _G->n_quads_alloc);
 	for(i = 0; i < 4; ++i){
 		lua_pushinteger(L, 1+i);
 		lua_gettable(L, 1);
@@ -225,14 +205,7 @@ static int cb_PrimView_Quad(lua_State *L){
 static int cb_PrimView_Tetrahedron(lua_State *L){
 	int i;
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_tets >= _G->n_tets_alloc){
-		_G->n_tets_alloc = 2*_G->n_tets_alloc+8;
-		_G->tet = (PrimView_Tet*)realloc(_G->tet, sizeof(PrimView_Tet) * _G->n_tets_alloc);
-		if(NULL == _G->tet){
-			luaL_error(L, "Error allocating %d tets\n", _G->n_tets_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->tet, PrimView_Tet, _G->n_tets, _G->n_tets_alloc);
 	for(i = 0; i < 4; ++i){
 		lua_pushinteger(L, 1+i);
 		lua_gettable(L, 1);
@@ -247,14 +220,7 @@ static int cb_PrimView_Tetrahedron(lua_State *L){
 }
 static int cb_PrimView_Sphere(lua_State *L){
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_spheres >= _G->n_spheres_alloc){
-		_G->n_spheres_alloc = 2*_G->n_spheres_alloc+8;
-		_G->sphere = (PrimView_Sphere*)realloc(_G->sphere, sizeof(PrimView_Sphere) * _G->n_spheres_alloc);
-		if(NULL == _G->sphere){
-			luaL_error(L, "Error allocating %d spheres\n", _G->n_spheres_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->sphere, PrimView_Sphere, _G->n_spheres, _G->n_spheres_alloc);
 	
 	lua_pushinteger(L, 1);
 	lua_gettable(L, 1);
@@ -273,14 +239,7 @@ static int cb_PrimView_Sphere(lua_State *L){
 }
 static int cb_PrimView_Text(lua_State *L){
 	luaL_argcheck(L, lua_istable(L,1), 1, "Expected table\n");
-	if(_G->n_texts >= _G->n_texts_alloc){
-		_G->n_texts_alloc = 2*_G->n_texts_alloc+8;
-		_G->text = (PrimView_Text*)realloc(_G->text, sizeof(PrimView_Text) * _G->n_texts_alloc);
-		if(NULL == _G->text){
-			luaL_error(L, "Error allocating %d texts\n", _G->n_texts_alloc);
-			return 0;
-		}
-	}
+	EXPAND_ALLOC(_G->text, PrimView_Text, _G->n_texts, _G->n_texts_alloc);
 	
 	lua_pushinteger(L, 1);
 	lua_gettable(L, 1);

@@ -1,4 +1,4 @@
-CFLAGS = -O0 -ggdb -Wall
+CFLAGS = -O2 -Wall
 SUBSYSTEM = -Wl,-subsystem,windows
 
 LUA_INC = -I/d/dev/libs/lua-5.2.0/src
@@ -21,3 +21,6 @@ GLShapes.o: GLShapes.c GLShapes.h geom.h
 	gcc -c $(CFLAGS) GLShapes.c -o GLShapes.o
 lodepng.o: lodepng.c lodepng.h
 	gcc -c $(CFLAGS) lodepng.c -o lodepng.o
+
+clean:
+	rm -f main.o geom.o PrimViewAPI.o GLShapes.o lodepng.o primview.exe
