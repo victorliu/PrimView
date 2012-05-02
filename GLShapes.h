@@ -13,5 +13,6 @@ void GLDrawAxes(const double origin[3]);
 void GLDrawBall();
 // Draws a high quality sphere
 void GLDrawSphere();
+void GLPerspective(GLdouble fovy, int width, int height, GLdouble zNear, GLdouble zFar);
 
 #endif // GLSHAPES_H_INCLUDED

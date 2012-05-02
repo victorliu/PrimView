@@ -225,7 +225,7 @@ void menu(int op) {
 
 /* reshaped window */
 void reshape(int width, int height) {
-	GLfloat fieldOfView = 45.0f;
+	const GLfloat fieldOfView = 45.0f;
 	glViewport (0, 0, (GLsizei) width, (GLsizei) height);
 	window_width = width;
 	window_height = height;
@@ -233,7 +233,7 @@ void reshape(int width, int height) {
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(fieldOfView, (GLfloat) width/(GLfloat) height, 0.1, 1000.0);
+	GLPerspective(fieldOfView, width, height, 0.1, 1000.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

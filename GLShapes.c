@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <GL/GL.h>
 #include "geom.h"
@@ -253,3 +254,38 @@ void GLShapesInit(){
 void GLShapesDestroy(){
 	glDeleteLists(shapeDL0, 4);
 }
+
+void GLPerspective(GLdouble fovy, int width, int height, GLdouble zNear, GLdouble zFar){
+	GLdouble m[16];
+	GLdouble aspect = (GLdouble)width / (GLdouble)height;
+
+	GLdouble depth = zFar - zNear;
+	GLdouble q = -(zFar + zNear) / depth;
+	GLdouble qn = -2 * (zFar * zNear) / depth;
+
+	GLdouble w = 2 * zNear / (double)width;
+	w = w / aspect;
+	GLdouble h = 2 * zNear / (double)height;
+
+	m[0]  = w;
+	m[1]  = 0;
+	m[2]  = 0;
+	m[3]  = 0;
+
+	m[4]  = 0;
+	m[5]  = h;
+	m[6]  = 0;
+	m[7]  = 0;
+
+	m[8]  = 0;
+	m[9]  = 0;
+	m[10] = q;
+	m[11] = -1;
+
+	m[12] = 0;
+	m[13] = 0;
+	m[14] = qn;
+	m[15] = 0;
+	glMultMatrixd(m);
+}
+
