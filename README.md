@@ -133,3 +133,7 @@ Text should be displayed somewhere near where the specified point in screen spac
 Rotation is to be performed by clicking and dragging a mouse button, and zooming by the scroll wheel.
 
 Facilities must be provided to perform screen capture and to save and load the current view to disk.
+
+Reference viewer
+----------------
+The reference viewer currently requires FreeGLUT and Lua 5.2.0 to compile.
