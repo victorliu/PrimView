@@ -25,7 +25,7 @@ The PrimView scripting language is an extension of Lua. There are only two symbo
 > Indices are zero-based and may be negative, indicating indexing from the end of the current list of points (-1 is the last point added, -2 is the next to last point, etc.).
 > Additional options may also be specified (see `PrimView.Point`).
 
-### `PrimView.Arrow{i0, i1, i2}`
+### `PrimView.Arrow{i0, i1}`
 
 > Adds a arrow to the current set of geometry from point index i0 to i1.
 > See `PrimView.Line` for indexing details.
@@ -49,6 +49,7 @@ The PrimView scripting language is an extension of Lua. There are only two symbo
 > Adds a tetrahedron to the current set of geometry with vertex point indices i0, i1, i2, and i3. 
 > See `PrimView.Line` for indexing details.
 > Additional options may also be specified (see `PrimView.Point`).
+
 ### `PrimView.Sphere{ic, r}`
 
 > Adds a sphere to the current set of geometry with center point index ic and radius r. 
@@ -108,7 +109,7 @@ The PrimView scripting language is an extension of Lua. There are only two symbo
 
 PrimView file format
 --------------------
-A valid PrimView file must begin with the first `PVF(v)` where v currently must be 1.
+A valid PrimView file must begin with the first `PVF(v)` where v currently must be 1. After this, the file can be any valid Lua script.
 
 ### Version 1 aliases
 
@@ -123,4 +124,12 @@ A valid PrimView file must begin with the first `PVF(v)` where v currently must 
 PrimView viewer feature specification
 -------------------------------------
 
+The viewer must provide a basic 3D viewport with arcball rotation, display all the specified geometry, and provide basic viewing options.
 
+### Geometry display
+
+Points are rendered as spheres, lines as cylinders, and the rest should be obvious. Nonplanar quads are interpreted by the 3D pipeline accordingly.
+Text should be displayed somewhere near where the specified point in screen space, but there are no strict requirements.
+Rotation is to be performed by clicking and dragging a mouse button, and zooming by the scroll wheel.
+
+Facilities must be provided to perform screen capture and to save and load the current view to disk.
