@@ -70,7 +70,7 @@ void GLDrawBall(){
 void GLDrawSphere(){
 	glCallList(shapeDL0+3);
 }
-void GLDrawVector(const double vector[3], const double base[3]){ // Draws a cylindrical arrow from point p along vector dir
+void GLDrawVector(const double base[3], const double vector[3]){ // Draws a cylindrical arrow from point p along vector dir
 	double len = geom_norm3d(vector);
 	double mat[16] = {
 		vector[0], vector[1], vector[2], 0,
@@ -103,7 +103,7 @@ void GLDrawAxes(const double origin[3]){
 	for(i = 0; i < 3u; ++i){
 		glColor4fv(axis_colors[i]);
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, axis_colors[i]);
-		GLDrawVector(&id[3*i], origin);
+		GLDrawVector(origin, &id[3*i]);
 	}
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, saved);
 }

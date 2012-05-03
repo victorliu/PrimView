@@ -403,13 +403,13 @@ void draw() {
 			double vec[3];
 			unsigned d;
 			for(d = 0; d < 3u; ++d){
-				base[d] = G.point[G.line[i].v[0]].p[d];
-				vec[d] = G.point[G.line[i].v[1]].p[d] - G.point[G.line[i].v[0]].p[d];
+				base[d] = G.point[G.arrow[i].v[0]].p[d];
+				vec[d] = G.point[G.arrow[i].v[1]].p[d] - G.point[G.arrow[i].v[0]].p[d];
 			}
-			if(G.line[i].props.color[0] >= 0){
-				glColor3fv(G.line[i].props.color);
+			if(G.arrow[i].props.color[0] >= 0){
+				glColor3fv(G.arrow[i].props.color);
 			}else{
-				glColor3f(0.0f, 0.6f, 1.0f);
+				glColor3f(1.0f, 0.6f, 0.0f);
 			}
 			GLDrawVector(base, vec);
 		}

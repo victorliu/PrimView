@@ -7,7 +7,7 @@ void GLShapesDestroy();
 // Draws a cylinder from point p along vector dir
 void GLDrawCylinder(const double base[3], const double vector[3], const double radius);
 // Draws a cylindrical arrow from point p along vector dir
-void GLDrawVector(const double vector[3], const double base[3]);
+void GLDrawVector(const double base[3], const double vector[3]);
 void GLDrawAxes(const double origin[3]);
 // Draws a low quality sphere
 void GLDrawBall();
