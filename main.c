@@ -127,8 +127,8 @@ void cam_pan_end(int x, int y){
 	cam_panning = 0;
 }
 void cam_pan_update(int x, int y){
-	double fx = render_settings.move_inc * (x - mouse_down_x);
-	double fy = render_settings.move_inc * (mouse_down_y - y);
+	double fx = render_settings.move_inc * 64*(double)(x - mouse_down_x)/window_width;
+	double fy = render_settings.move_inc * 64*(double)(mouse_down_y - y)/window_height;
 	cam_pan[0] = cam_pan_prev[0] + fx;
 	cam_pan[1] = cam_pan_prev[1] + fy;
 	cam_panning = 1;
