@@ -137,3 +137,4 @@ Facilities must be provided to perform screen capture and to save and load the c
 Reference viewer
 ----------------
 The reference viewer currently requires FreeGLUT and Lua 5.2.0 to compile.
+Left click and drag to rotate view, use the scroll wheel to move forward and backwards, middle drag to pan the camera, and right click for a menu of additional options.
