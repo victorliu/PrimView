@@ -25,7 +25,7 @@ struct render_settings_struct{
 #define RENDER_FLAG_HIDE_BALLS  0x0040
 #define RENDER_FLAG_HIDE_TEXTS  0x0080
 #define RENDER_FLAG_SHOW_AXES   0x0100
-
+#define RENDER_FLAG_AUTO_CENTER 0x1000
 	double move_inc;
 } render_settings;
 
@@ -63,7 +63,7 @@ void draw();
 void quat_to_mat(const double q[4], double m[16]){
 	m[ 0] = 1 - 2*(q[1]*q[1] + q[2]*q[2]);
 	m[ 1] = 2*(q[0]*q[1] - q[3]*q[2]);
-	m[ 2] = 2*(q[1]*q[2] + q[3]*q[1]);
+	m[ 2] = 2*(q[0]*q[2] + q[3]*q[1]);
 	m[ 3] = 0;
 	m[ 4] = 2*(q[0]*q[1] + q[3]*q[2]);
 	m[ 5] = 1 - 2*(q[0]*q[0] + q[2]*q[2]);
@@ -233,6 +233,8 @@ void menu(int op) {
 	case 10: glClearColor(0.0f, 0.0f, 0.0f, 0.0f); break;
 	case 11: glClearColor(0.5f, 0.5f, 0.5f, 0.0f); break;
 	case 12: glClearColor(1.0f, 1.0f, 1.0f, 0.0f); break;
+	case 'c':
+		render_settings.flags ^= RENDER_FLAG_AUTO_CENTER; break;
 	case 'v':
 		view_save();
 		break;
@@ -337,7 +339,13 @@ void draw() {
 	glLoadIdentity();
 	glTranslated(cam_pan[0], cam_pan[1],-cam_dist);
 	cam_load_matrix();
-
+	if(render_settings.flags & RENDER_FLAG_AUTO_CENTER){
+		glTranslated(
+			-0.5*(render_settings.extent_max[0] + render_settings.extent_min[0]),
+			-0.5*(render_settings.extent_max[1] + render_settings.extent_min[1]),
+			-0.5*(render_settings.extent_max[2] + render_settings.extent_min[2]));
+	}
+	
 	glEnable(GL_LIGHTING);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if(RENDER_FLAG_SHOW_AXES & render_settings.flags){
@@ -723,6 +731,7 @@ int main(int argc, char** argv) {
 	glutAddSubMenu("Show/Hide", subMenuShowHide);
 	glutAddSubMenu("Background color", subMenuBackground);
 	glutAddSubMenu("Render style", subMenuRender);
+	glutAddMenuEntry("Toggle rotate-about-center", 'c');
 	glutAddMenuEntry("Save view", 'v');
 	glutAddMenuEntry("Save screenshot", 's');
 	glutAddMenuEntry("Quit", 'q');
