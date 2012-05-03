@@ -47,8 +47,8 @@ int g_fVBOSupported = 0;					// ARB_vertex_buffer_object supported?
 GLuint m_nVBOVertices; // VBO name
 
 // Camera info
-double cam_quat[4], cam_quat_prev[4], cam_down_vec[3], cam_dist;
-int cam_dragging = 0;
+double cam_quat[4], cam_quat_prev[4], cam_down_vec[3], cam_dist, cam_pan[2], cam_pan_prev[2];
+int cam_dragging = 0, cam_panning = 0;
 
 //mouse params
 int mouse_left_down = 0;
@@ -60,6 +60,24 @@ int window_width, window_height;
 
 void draw();
 
+void quat_to_mat(const double q[4], double m[16]){
+	m[ 0] = 1 - 2*(q[1]*q[1] + q[2]*q[2]);
+	m[ 1] = 2*(q[0]*q[1] - q[3]*q[2]);
+	m[ 2] = 2*(q[1]*q[2] + q[3]*q[1]);
+	m[ 3] = 0;
+	m[ 4] = 2*(q[0]*q[1] + q[3]*q[2]);
+	m[ 5] = 1 - 2*(q[0]*q[0] + q[2]*q[2]);
+	m[ 6] = 2*(q[1]*q[2] - q[3]*q[0]);
+	m[ 7] = 0;
+	m[ 8] = 2*(q[0]*q[2] - q[3]*q[1]);
+	m[ 9] = 2*(q[1]*q[2] + q[3]*q[0]);
+	m[10] = 1 - 2*(q[0]*q[0] + q[1]*q[1]);
+	m[11] = 0;
+	m[12] = 0;
+	m[13] = 0;
+	m[14] = 0;
+	m[15] = 1;
+}
 void point_to_sphere(double xy[2], double v[3]){
 	// Remap the point to (-1,-1) -> (1,1)
 	xy[0] = 2 * xy[0] - 1;
@@ -100,33 +118,35 @@ void cam_drag_update(double xy[2]){
 
 	cam_dragging = 1;
 }
+void cam_pan_begin(int x, int y){
+	cam_pan_prev[0] = cam_pan[0];
+	cam_pan_prev[1] = cam_pan[1];
+	cam_panning = 1;
+}
+void cam_pan_end(int x, int y){
+	cam_panning = 0;
+}
+void cam_pan_update(int x, int y){
+	double fx = render_settings.move_inc * (x - mouse_down_x);
+	double fy = render_settings.move_inc * (mouse_down_y - y);
+	cam_pan[0] = cam_pan_prev[0] + fx;
+	cam_pan[1] = cam_pan_prev[1] + fy;
+	cam_panning = 1;
+}
 void cam_load_matrix(){
-	const double *q = cam_quat;
-	double m[16] = {
-		1 - 2*(q[1]*q[1] + q[2]*q[2]),
-		2*(q[0]*q[1] - q[3]*q[2]),
-		2*(q[1]*q[2] + q[3]*q[1]),
-		0,
-		2*(q[0]*q[1] + q[3]*q[2]),
-		1 - 2*(q[0]*q[0] + q[2]*q[2]),
-		2*(q[1]*q[2] - q[3]*q[0]),
-		0,
-		2*(q[0]*q[2] - q[3]*q[1]),
-		2*(q[1]*q[2] + q[3]*q[0]),
-		1 - 2*(q[0]*q[0] + q[1]*q[1]),
-		0,
-		0,0,0,1
-	};
+	double m[16]; quat_to_mat(cam_quat, m);
 	glMultMatrixd(m);
 }
 void view_save(){
 	FILE *fp = fopen("primview.view", "wb");
 	if(NULL == fp){ return; }
-	fprintf(fp, "%.14g %.14g %.14g %.14g\n%.14g\n",
+	fprintf(fp, "%.14g %.14g %.14g %.14g %.14g %.14g\n%.14g\n",
 		cam_quat[0],
 		cam_quat[1],
 		cam_quat[2],
 		cam_quat[3],
+		cam_pan[0],
+		cam_pan[1],
 		cam_dist
 	);
 	fclose(fp);
@@ -134,11 +154,13 @@ void view_save(){
 void view_load(){
 	FILE *fp = fopen("primview.view", "rb");
 	if(NULL == fp){ return; }
-	fscanf(fp, "%lf %lf %lf %lf %lf",
+	fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf",
 		&cam_quat[0],
 		&cam_quat[1],
 		&cam_quat[2],
 		&cam_quat[3],
+		&cam_pan[0],
+		&cam_pan[1],
 		&cam_dist
 	);
 	fclose(fp);
@@ -166,7 +188,6 @@ void screenshot(){
 void init_render_settings(){
 	unsigned int i, d;
 	render_settings.flags = RENDER_FLAG_SHOW_AXES;
-	double domain_size = 0;
 	
 	for(d = 0; d < 3u; ++d){
 		render_settings.extent_min[d] = DBL_MAX;
@@ -183,11 +204,13 @@ void init_render_settings(){
 		}
 	}
 	
-	for(d = 0; d < 3u; ++d){
-		double diff = render_settings.extent_max[d] - render_settings.extent_min[d];
-		domain_size += diff*diff;
-	}
-	render_settings.move_inc = 0.1 * domain_size;
+	const double diff[3] = {
+		render_settings.extent_max[0] - render_settings.extent_min[0],
+		render_settings.extent_max[1] - render_settings.extent_min[1],
+		render_settings.extent_max[2] - render_settings.extent_min[2]
+	};
+	const double domain_size = geom_norm3d(diff);
+	render_settings.move_inc = 0.01 * domain_size;
 }
 
 void onquit(){
@@ -240,31 +263,31 @@ void reshape(int width, int height) {
 }
 
 /* executed when button 'button' is put into state 'state' at screen position ('x', 'y') */
-void mouseClick(int button, int state, int x, int y) {
+void mouseClick(int button, int state, int x, int y){
 	if(GLUT_LEFT_BUTTON == button){
+		double f[2] = {
+			(double)x/(double)window_width,
+			(double)1-(double)y/(double)window_height
+		};
 		if(GLUT_DOWN == state){
 			mouse_left_down = 1;
 			mouse_down_x = x;
 			mouse_down_y = y;
-			double f[2] = {
-				(double)x/(double)window_width,
-				(double)1-(double)y/(double)window_height
-			};
 			cam_drag_begin(f);
 		}else if(GLUT_UP == state){
 			mouse_left_down = 0;
-			double f[2] = {
-				(double)x/(double)window_width,
-				(double)1-(double)y/(double)window_height
-			};
 			cam_drag_end(f);
 			glutPostRedisplay();
 		}
 	}else if(GLUT_MIDDLE_BUTTON == button){
 		if(GLUT_DOWN == state){
 			mouse_middle_down = 1;
+			mouse_down_x = x;
+			mouse_down_y = y;
+			cam_pan_begin(x, y);
 		}else if(GLUT_UP == state){
 			mouse_middle_down = 0;
+			cam_pan_end(x, y);
 			glutPostRedisplay();
 		}
 	}
@@ -281,13 +304,16 @@ void mouseMotion(int x, int y) {
 		};
 		cam_drag_update(f);
 		glutPostRedisplay();
+	}else if(mouse_middle_down){
+		cam_pan_update(x, y);
+		glutPostRedisplay();
 	}
 	mouse_prev_x = x;
 	mouse_prev_y = y;
 }
 void mouseWheel(int button, int dir, int x, int y){
-	double f = (dir >= 0) ? 0.9 : 1./0.9;
-	cam_dist *= f;
+	double f = (dir >= 0) ? -render_settings.move_inc : render_settings.move_inc;
+	cam_dist += f;
 	glutPostRedisplay();
 }
 
@@ -309,7 +335,7 @@ void draw() {
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslated(0,0,-cam_dist);
+	glTranslated(cam_pan[0], cam_pan[1],-cam_dist);
 	cam_load_matrix();
 
 	glEnable(GL_LIGHTING);
@@ -652,15 +678,13 @@ int main(int argc, char** argv) {
 
 	if(argc > 1){
 		PrimView_Geometry_load(&G, argv[1]);
-		cam_quat[0] = 1;
-		cam_quat[1] = 0;
-		cam_quat[2] = 0;
-		cam_quat[3] = 0;
-		cam_quat_prev[0] = cam_quat[0];
-		cam_quat_prev[1] = cam_quat[1];
-		cam_quat_prev[2] = cam_quat[2];
-		cam_quat_prev[3] = cam_quat[3];
-		cam_dist = 1;
+		cam_quat[0] = 0.22434389166788;
+		cam_quat[1] = 0.54085903674702;
+		cam_quat[2] = 0.74864688210213;
+		cam_quat[3] = 0.31091665532608;
+		cam_pan[0] = 0;
+		cam_pan[1] = 0;
+		cam_dist = 5;
 		view_load();
 	}
 	init_render_settings();
