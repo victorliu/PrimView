@@ -1,3 +1,9 @@
+-- This input script opens the following file and draws all the ATOMs
+-- with the specified radius.
+
+PDFfile = '1CRN.pdb'
+atom_radius = 1
+
 CPKcolor = {
 	H = {1,1,1},
 	C = {0,0,0},
@@ -10,13 +16,12 @@ CPKcolor = {
 	P = {1,0.5,0},
 	other = {1,0,1}
 }
-atom_radius = 1
 
 function trim(s)
 	return string.match(s, '%a+')
 end
 
-for line in io.lines('1CRN.pdb') do
+for line in io.lines(PDFfile) do
 	if string.sub(line, 1, 6) == 'ATOM  ' then
 		x = string.sub(line, 31, 38)
 		y = string.sub(line, 39, 46)
