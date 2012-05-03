@@ -1,6 +1,9 @@
 Listing of examples
 -------------------
 
+simple.lua
+	A simple example showing one of every object.
+
 pdbviewer.lua
 	A script that reads in a PDB (currently set to 1CRN.pdb) and renders all
 	the ATOMs using spheres.
