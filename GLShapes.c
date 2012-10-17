@@ -1,6 +1,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <GL/GL.h>
+#include <GL/gl.h>
 #include "geom.h"
 
 #define CIRCLE_DIVISIONS 16u

@@ -1,4 +1,6 @@
-#include <windows.h>
+#ifdef WIN32
+# include <windows.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
@@ -34,17 +36,6 @@ struct render_settings_struct{
 // VBO Extension Definitions, From glext.h
 #define GL_ARRAY_BUFFER_ARB 0x8892
 #define GL_STATIC_DRAW_ARB 0x88E4
-typedef void (APIENTRY * PFNGLBINDBUFFERARBPROC) (GLenum target, GLuint buffer);
-typedef void (APIENTRY * PFNGLDELETEBUFFERSARBPROC) (GLsizei n, const GLuint *buffers);
-typedef void (APIENTRY * PFNGLGENBUFFERSARBPROC) (GLsizei n, GLuint *buffers);
-typedef void (APIENTRY * PFNGLBUFFERDATAARBPROC) (GLenum target, int size, const GLvoid *data, GLenum usage);
-// VBO Extension Function Pointers
-PFNGLGENBUFFERSARBPROC glGenBuffersARB = NULL;					// VBO Name Generation Procedure
-PFNGLBINDBUFFERARBPROC glBindBufferARB = NULL;					// VBO Bind Procedure
-PFNGLBUFFERDATAARBPROC glBufferDataARB = NULL;					// VBO Data Loading Procedure
-PFNGLDELETEBUFFERSARBPROC glDeleteBuffersARB = NULL;				// VBO Deletion Procedure
-int g_fVBOSupported = 0;					// ARB_vertex_buffer_object supported?
-GLuint m_nVBOVertices; // VBO name
 
 // Camera info
 double cam_quat[4], cam_quat_prev[4], cam_down_vec[3], cam_dist, cam_pan[2], cam_pan_prev[2];
@@ -154,7 +145,7 @@ void view_save(){
 void view_load(){
 	FILE *fp = fopen("primview.view", "rb");
 	if(NULL == fp){ return; }
-	fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf",
+	if(7 != fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf",
 		&cam_quat[0],
 		&cam_quat[1],
 		&cam_quat[2],
@@ -162,7 +153,7 @@ void view_load(){
 		&cam_pan[0],
 		&cam_pan[1],
 		&cam_dist
-	);
+	)){ ; }
 	fclose(fp);
 }
 void screenshot(){
@@ -215,7 +206,6 @@ void init_render_settings(){
 
 void onquit(){
 	GLShapesDestroy();
-	glDeleteBuffersARB(1, &m_nVBOVertices);
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_DEFAULT);
 }
 
@@ -263,6 +253,11 @@ void reshape(int width, int height) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
+void mouseWheel(int button, int dir, int x, int y){
+	double f = (dir >= 0) ? -render_settings.move_inc : render_settings.move_inc;
+	cam_dist += f;
+	glutPostRedisplay();
+}
 
 /* executed when button 'button' is put into state 'state' at screen position ('x', 'y') */
 void mouseClick(int button, int state, int x, int y){
@@ -292,6 +287,12 @@ void mouseClick(int button, int state, int x, int y){
 			cam_pan_end(x, y);
 			glutPostRedisplay();
 		}
+	}else{
+#ifndef WIN32
+		if((3 == button || 4 == button) && GLUT_UP != state){
+			mouseWheel(button, (3 == button) ? 1 : -1, x, y);
+		}
+#endif
 	}
 	mouse_prev_x = x;
 	mouse_prev_y = y;
@@ -312,11 +313,6 @@ void mouseMotion(int x, int y) {
 	}
 	mouse_prev_x = x;
 	mouse_prev_y = y;
-}
-void mouseWheel(int button, int dir, int x, int y){
-	double f = (dir >= 0) ? -render_settings.move_inc : render_settings.move_inc;
-	cam_dist += f;
-	glutPostRedisplay();
 }
 
 /* render the scene */
@@ -674,18 +670,9 @@ int main(int argc, char** argv) {
 
 	GLStdLighting();
 	// Check For VBOs Supported
-	g_fVBOSupported = IsExtensionSupported("GL_ARB_vertex_buffer_object");
-	if(g_fVBOSupported){
-		// Get Pointers To The GL Functions
-		glGenBuffersARB = (PFNGLGENBUFFERSARBPROC) wglGetProcAddress("glGenBuffersARB");
-		glBindBufferARB = (PFNGLBINDBUFFERARBPROC) wglGetProcAddress("glBindBufferARB");
-		glBufferDataARB = (PFNGLBUFFERDATAARBPROC) wglGetProcAddress("glBufferDataARB");
-		glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC) wglGetProcAddress("glDeleteBuffersARB");
-		// Load Vertex Data Into The Graphics Card Memory
-	}
 
 	if(argc > 1){
-		PrimView_Geometry_load(&G, argv[1]);
+		PrimView_Geometry_load(&G, argc, argv);
 		cam_quat[0] = 0.22434389166788;
 		cam_quat[1] = 0.54085903674702;
 		cam_quat[2] = 0.74864688210213;
@@ -700,7 +687,9 @@ int main(int argc, char** argv) {
 
 	// register glut call backs
 	glutMouseFunc(mouseClick);
+#ifdef WIN32
 	glutMouseWheelFunc(mouseWheel);
+#endif
 	glutMotionFunc(mouseMotion);
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(draw);  

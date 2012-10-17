@@ -1,7 +1,7 @@
 -- This input script opens the following file and draws all the ATOMs
 -- with the specified radius.
 
-PDFfile = '1CRN.pdb'
+PDFfile = arg[1]
 atom_radius = 1
 
 CPKcolor = {

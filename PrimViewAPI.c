@@ -23,7 +23,9 @@ static int cb_PrimView_Text(lua_State *L);
 static int cb_PrimView_SetOptions(lua_State *L);
 static int cb_PVF(lua_State *L);
 
-int PrimView_Geometry_load(PrimView_Geometry *geom, const char *filename){
+int PrimView_Geometry_load(PrimView_Geometry *geom, int argc, char **argv){
+	int i;
+	const char *filename = argv[1];
 	lua_State *L;
 	if(NULL == geom){ return -1; }
 	if(NULL == filename){ return -2; }
@@ -52,6 +54,16 @@ int PrimView_Geometry_load(PrimView_Geometry *geom, const char *filename){
 	L = luaL_newstate();
 	luaL_openlibs(L);
 	register_PrimView_API(L);
+	
+	// Add arguments
+	lua_createtable(L, argc-1, 0);
+	for(i = 1; i < argc; ++i){
+		lua_pushinteger(L, i-1);
+		lua_pushstring(L, argv[i]);
+		lua_settable(L, -3);
+	}
+	lua_setglobal(L, "arg");
+	
 	if(luaL_loadfile(L, filename)){
 		fprintf(stderr, "%s\n", lua_tostring(L, -1));
 		lua_pop(L, 1); /* pop error message from the stack */
@@ -249,7 +261,7 @@ static int cb_PrimView_Text(lua_State *L){
 	lua_pop(L, 1);
 	lua_pushinteger(L, 2);
 	lua_gettable(L, 1);
-	unsigned int len;
+	size_t len;
 	const char *s = luaL_checklstring(L, 2, &len);
 	if(NULL != s){
 		if(len < OBJ_TEXT_LENGTH){

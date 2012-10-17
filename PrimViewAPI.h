@@ -86,7 +86,7 @@ typedef struct PrimView_Geometry_struct{
 	PrimView_Options options;
 } PrimView_Geometry;
 
-int PrimView_Geometry_load(PrimView_Geometry *geom, const char *filename);
+int PrimView_Geometry_load(PrimView_Geometry *geom, int argc, char **argv);
 int PrimView_Geometry_free(PrimView_Geometry *geom);
 
 #endif // PRIMVIEW_API_H_INCLUDED
